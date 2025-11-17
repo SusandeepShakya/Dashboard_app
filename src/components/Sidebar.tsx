@@ -13,6 +13,8 @@ interface SidebarProps {
   onClose: () => void;
   tabs: Tab[];
   title?: string;
+  onLogout?: () => void;
+  user?: { username: string };
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -20,6 +22,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onClose,
   tabs,
   title = "Dashboard",
+  onLogout,
+  user
 }) => {
   const location = useLocation();
 
@@ -84,6 +88,21 @@ const Sidebar: React.FC<SidebarProps> = ({
               );
             })}
           </div>
+
+          {user && onLogout && (
+            <div className="border-t border-gray-700 pt-4 mt-auto">
+              <div className="px-6 py-2 text-sm text-gray-400">
+                <div className="truncate">{user.username}</div>
+              </div>
+              <button
+                onClick={onLogout}
+                className="w-full text-left px-6 py-3 flex items-center space-x-3 transition-colors hover:bg-gray-700 text-red-400"
+              >
+                <span className="text-xl">🚪</span>
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
         </nav>
       </div>
     </>

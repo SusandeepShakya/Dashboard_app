@@ -1,14 +1,24 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../hooks/redux";
+import { logout } from "../store/slices/authSlice";
 import Sidebar, { Tab } from "./Sidebar";
 
 const DashboardLayout: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { user } = useAppSelector((state) => state.auth);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const sidebarTabs: Tab[] = useMemo(() => [
     { id: 'home', label: 'Home', icon: '🏠', path: '/' },
     { id: 'data', label: 'Data', icon: '📊', path: '/data' },
   ], []);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login", { replace: true });
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -32,6 +42,8 @@ const DashboardLayout: React.FC = () => {
         onClose={() => setIsSidebarOpen(false)}
         tabs={sidebarTabs}
         title="Dashboard"
+        onLogout={handleLogout}
+        user={user || undefined}
       />
       <main className="flex-1 p-4 lg:p-8 overflow-y-auto relative">
         <button

@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import axios from 'axios';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useAppDispatch, useAppSelector } from '../hooks/redux';
+import { fetchUsers, createUser, updateUser, deleteUser } from '../store/slices/apiSlice';
+import { setSearch, setCurrentPage, setItemsPerPage } from '../store/slices/filterSlice';
 import DataTable, { Column } from '../components/DataTable';
 import SearchBar from '../components/SearchBar';
 import Pagination from '../components/Pagination';
@@ -8,49 +10,16 @@ import UserForm from '../components/UserForm';
 import { User } from '../types';
 
 const Data: React.FC = () => {
-  const [data, setData] = useState<User[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(5);
+  const dispatch = useAppDispatch();
+  const { data, loading, error } = useAppSelector((state) => state.api);
+  const { search, currentPage, itemsPerPage } = useAppSelector((state) => state.filter);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response = await axios.get('https://jsonplaceholder.typicode.com/users');
-      setData(response.data);
-      setLoading(false);
-    } catch (error: any) {
-      setError(error.response?.data?.message || 'Failed to fetch data');
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
-
-  const addUser = (userData: Omit<User, 'id'>) => {
-    const newId = Math.max(...data.map(u => u.id), 0) + 1;
-    const newUser: User = {
-      ...userData,
-      id: newId,
-    };
-    setData(prev => [...prev, newUser]);
-  };
-
-  const updateUser = (user: User) => {
-    setData(prev => prev.map(u => (u.id === user.id ? user : u)));
-  };
-
-  const deleteUser = (id: number) => {
-    setData(prev => prev.filter(user => user.id !== id));
-  };
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
   const columns: Column[] = useMemo(() => [
     { key: 'id', label: 'ID' },
@@ -71,7 +40,7 @@ const Data: React.FC = () => {
   const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
   const handleRetry = () => {
-    fetchUsers();
+    dispatch(fetchUsers());
   };
 
   const handleAdd = () => {
@@ -90,7 +59,7 @@ const Data: React.FC = () => {
 
   const confirmDelete = () => {
     if (deleteConfirm !== null) {
-      deleteUser(deleteConfirm);
+      dispatch(deleteUser(deleteConfirm));
       setDeleteConfirm(null);
       const remainingData = data.filter(user => user.id !== deleteConfirm);
       const filteredRemaining = remainingData.filter((user: User) =>
@@ -100,29 +69,19 @@ const Data: React.FC = () => {
       );
       const newTotalPages = Math.ceil(filteredRemaining.length / itemsPerPage);
       if (currentPage > newTotalPages && newTotalPages > 0) {
-        setCurrentPage(newTotalPages);
+        dispatch(setCurrentPage(newTotalPages));
       }
     }
   };
 
   const handleFormSubmit = (userData: Omit<User, 'id'> | User) => {
     if (editingUser) {
-      updateUser(userData as User);
+      dispatch(updateUser(userData as User));
     } else {
-      addUser(userData as Omit<User, 'id'>);
+      dispatch(createUser(userData as Omit<User, 'id'>));
     }
     setIsFormOpen(false);
     setEditingUser(null);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setCurrentPage(1);
-  };
-
-  const handleItemsPerPageChange = (items: number) => {
-    setItemsPerPage(items);
-    setCurrentPage(1);
   };
 
   return (
@@ -133,7 +92,7 @@ const Data: React.FC = () => {
           <div className="w-64">
             <SearchBar
               value={search}
-              onChange={handleSearchChange}
+              onChange={(value) => dispatch(setSearch(value))}
               placeholder="Search users..."
             />
           </div>
@@ -213,9 +172,9 @@ const Data: React.FC = () => {
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={setCurrentPage}
+          onPageChange={(page) => dispatch(setCurrentPage(page))}
           itemsPerPage={itemsPerPage}
-          onItemsPerPageChange={handleItemsPerPageChange}
+          onItemsPerPageChange={(items) => dispatch(setItemsPerPage(items))}
         />
       )}
     </div>

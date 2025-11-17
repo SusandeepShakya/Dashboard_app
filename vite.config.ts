@@ -7,4 +7,11 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  // @ts-ignore - Vitest config extension
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+    css: true,
+  },
 })

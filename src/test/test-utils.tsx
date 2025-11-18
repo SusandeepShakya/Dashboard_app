@@ -23,17 +23,14 @@ const createTestStore = (initialState = {}) => {
 interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
   preloadedState?: any;
   store?: ReturnType<typeof createTestStore>;
-  initialEntries?: string[];
 }
 
 const AllTheProviders = ({ 
   children, 
   store,
-  initialEntries = ['/']
 }: { 
   children: React.ReactNode;
   store: ReturnType<typeof createTestStore>;
-  initialEntries?: string[];
 }) => {
   return (
     <Provider store={store}>
@@ -49,13 +46,12 @@ const customRender = (
   {
     preloadedState = {},
     store = createTestStore(preloadedState),
-    initialEntries = ['/'],
     ...renderOptions
   }: CustomRenderOptions = {}
 ) => {
   const Wrapper = ({ children }: { children: React.ReactNode }) => {
     return (
-      <AllTheProviders store={store} initialEntries={initialEntries}>
+      <AllTheProviders store={store}>
         {children}
       </AllTheProviders>
     );
